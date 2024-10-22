@@ -2,6 +2,37 @@ import { useState } from "react";
 
 const Home = () => {
   const [addTask, setAddTask] = useState<boolean>(false);
+  const [title, setTitle] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
+
+  const handleSubmit = async () => {
+    const todoData = {
+      title,
+      description,
+    };
+
+    try {
+      const response = await fetch("", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(todoData),
+      });
+
+      if (response.ok) {
+        console.log("Task successfully created!");
+        setTitle("");
+        setDescription("");
+        setAddTask(false);
+      } else {
+        console.error("Failed to create task");
+      }
+    } catch (e) {
+      console.error("Error submitting task:", e);
+    }
+  };
+
   return (
     <>
       <div className="container mx-auto px-3">
@@ -31,7 +62,11 @@ const Home = () => {
           ></div>
 
           {addTask && (
-            <div className={`w-full md:w-1/3 ${addTask ? "order-1 md:order-2" : ""}`}>
+            <div
+              className={`w-full md:w-1/3 ${
+                addTask ? "order-1 md:order-2" : ""
+              }`}
+            >
               <div className="border-2 rounded-md p-4">
                 <div className="flex flex-col gap-3">
                   <h1 className="font-bold text-2xl">Add New Task</h1>
@@ -39,6 +74,8 @@ const Home = () => {
                     type="text"
                     name="title"
                     placeholder="title..."
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
                     className="bg-neutral-200 px-3 py-2 rounded-md outline-none"
                   />
                   <textarea
@@ -46,9 +83,14 @@ const Home = () => {
                     id="description"
                     className="bg-neutral-200 px-3 py-2 h-32 rounded-md outline-none"
                     placeholder="description..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
                   ></textarea>
                   <div className="flex justify-end">
-                    <button className="bg-blue-500 hover:bg-blue-700 px-4 py-1.5 text-white rounded-md">
+                    <button
+                      className="bg-blue-500 hover:bg-blue-700 px-4 py-1.5 text-white rounded-md"
+                      onClick={handleSubmit}
+                    >
                       Create Task
                     </button>
                   </div>
