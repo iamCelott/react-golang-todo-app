@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-
+	"time"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -16,12 +16,12 @@ func enableCors(w * http.ResponseWriter) {
 }
 
 type Task struct {
-	ID          uint   `gorm:"primaryKey"`
-	Title       string `gorm:"type:varchar(255);not null"`
-	Description string
-	Status      string `gorm:"type:enum('pending', 'completed');default:'pending'"`
-	CreatedAt   int64  `gorm:"autoCreateTime"`
-	UpdatedAt   int64  `gorm:"autoUpdateTime"`
+	ID          uint      `gorm:"primaryKey" json:"id"` // Menggunakan snake_case
+	Title       string    `gorm:"type:varchar(255);not null" json:"title"`
+	Description string    `json:"description"`
+	Status      string    `gorm:"type:enum('pending', 'completed');default:'pending'" json:"status"`
+	CreatedAt   time.Time `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt   time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 }
 
 func handleIndex(w http.ResponseWriter, r * http.Request) {
@@ -46,7 +46,7 @@ func handleTasks(w http.ResponseWriter, r * http.Request, db * gorm.DB) {
 func main() {
 	mux := http.NewServeMux()
 	var port = "8000"
-	db, err := gorm.Open(mysql.Open("root@tcp(localhost)/db_react_golang_todo_app"), &gorm.Config{})
+	db, err := gorm.Open(mysql.Open("root@tcp(localhost)/db_react_golang_todo_app?parseTime=true"), &gorm.Config{})
 	if err != nil {
 		panic("Failed Connect to Database!")
 	}

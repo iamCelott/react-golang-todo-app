@@ -1,10 +1,19 @@
 import { useEffect, useState } from "react";
 
+interface Task {
+  id: number;
+  title: string;
+  description: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 const Home = () => {
   const [addTask, setAddTask] = useState<boolean>(false);
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
-  const [tasks, setTasks] = useState([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
 
   const handleTasks = async () => {
     try {
@@ -77,7 +86,14 @@ const Home = () => {
             className={`w-full min-h-[308px] ${
               addTask ? "md:w-2/3 order-2 md:order-1" : ""
             } bg-neutral-300 p-3 rounded-md`}
-          ></div>
+          >
+            {tasks.map((task, index) => (
+              <div className="" key={index}>
+                <h2>{task.title}</h2>
+                <p>{task.description}</p>
+              </div>
+            ))}
+          </div>
 
           {addTask && (
             <div
