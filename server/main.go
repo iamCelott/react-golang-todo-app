@@ -9,6 +9,12 @@ import (
 	"gorm.io/gorm"
 )
 
+func enableCors(w * http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	(*w).Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Content-Type")
+}
+
 type Task struct {
 	ID          uint   `gorm:"primaryKey"`
 	Title       string `gorm:"type:varchar(255);not null"`
@@ -19,10 +25,12 @@ type Task struct {
 }
 
 func handleIndex(w http.ResponseWriter, r * http.Request) {
+	enableCors(&w) 
 	fmt.Fprintf(w, "Server Started...")
 }
 
 func handleTasks(w http.ResponseWriter, r * http.Request, db * gorm.DB) {
+	enableCors(&w) 
 	var tasks []Task
 	result := db.Find(&tasks)
 

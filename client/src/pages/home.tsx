@@ -1,9 +1,23 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const Home = () => {
   const [addTask, setAddTask] = useState<boolean>(false);
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
+  const [tasks, setTasks] = useState([]);
+
+  const handleTasks = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/tasks");
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      const data = await response.json();
+      setTasks(data);
+    } catch (e) {
+      console.error("Error submitting task:", e);
+    }
+  };
 
   const handleSubmit = async () => {
     const todoData = {
@@ -32,6 +46,10 @@ const Home = () => {
       console.error("Error submitting task:", e);
     }
   };
+
+  useEffect(() => {
+    handleTasks();
+  }, []);
 
   return (
     <>
