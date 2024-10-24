@@ -35,7 +35,7 @@ const Home = () => {
     };
 
     try {
-      const response = await fetch("", {
+      const response = await fetch("http://localhost:8000/task/store", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -44,7 +44,6 @@ const Home = () => {
       });
 
       if (response.ok) {
-        console.log("Task successfully created!");
         setTitle("");
         setDescription("");
         setAddTask(false);
@@ -58,7 +57,7 @@ const Home = () => {
 
   useEffect(() => {
     handleTasks();
-  }, []);
+  }, [handleSubmit]);
 
   return (
     <>

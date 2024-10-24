@@ -3,8 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
+
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -13,10 +15,11 @@ func enableCors(w * http.ResponseWriter) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
 	(*w).Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 	(*w).Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	(*w).Header().Set("Access-Control-Allow-Credentials", "true")
 }
 
 type Task struct {
-	ID          uint      `gorm:"primaryKey" json:"id"` // Menggunakan snake_case
+	ID          uint      `gorm:"primaryKey" json:"id"`
 	Title       string    `gorm:"type:varchar(255);not null" json:"title"`
 	Description string    `json:"description"`
 	Status      string    `gorm:"type:enum('pending', 'completed');default:'pending'" json:"status"`
@@ -43,6 +46,30 @@ func handleTasks(w http.ResponseWriter, r * http.Request, db * gorm.DB) {
 	json.NewEncoder(w).Encode(tasks)
 }
 
+func handleCreateTask(w http.ResponseWriter, r * http.Request, db * gorm.DB) {
+	enableCors(&w) 
+	w.WriteHeader(http.StatusOK)
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		return
+	}
+
+	var task Task
+	if err := json.Unmarshal(body, &task); err != nil {
+		http.Error(w, "Invalid input format", http.StatusBadRequest)
+		return
+	}
+
+	if result := db.Create(&task); result.Error != nil {
+		http.Error(w, "Failed to create category", http.StatusInternalServerError)
+        return
+	}
+
+	w.Header().Set("Content-Type", "application.json")
+	json.NewEncoder(w).Encode(map[string]string{"message":"Task created successfully"})
+}
+
 func main() {
 	mux := http.NewServeMux()
 	var port = "8000"
@@ -55,6 +82,9 @@ func main() {
 	mux.HandleFunc("/", handleIndex)
 	mux.HandleFunc("/tasks", func(w http.ResponseWriter, r * http.Request) {
 		handleTasks(w, r, db)
+	})
+	mux.HandleFunc("/task/store", func(w http.ResponseWriter, r * http.Request) {
+		handleCreateTask(w, r, db)
 	})
 
 	fmt.Printf("Server Started at Port %s\n", port)
