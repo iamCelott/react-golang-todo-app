@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import trash from "../assets/trash.png";
+import edit from "../assets/edit.png";
 
 interface Task {
   id: number;
@@ -11,6 +13,7 @@ interface Task {
 
 const Home = () => {
   const [addTask, setAddTask] = useState<boolean>(false);
+  const [editTask, setEditTask] = useState<number | null>(null);
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -28,6 +31,33 @@ const Home = () => {
     }
   };
 
+  const handleEdit = async (index: number) => {
+    if (editTask === index) {
+      setAddTask(false);
+      setEditTask(null);
+    } else {
+      setAddTask(true);
+      setEditTask(index);
+      setTitle(tasks[index].title);
+      setDescription(tasks[index].description);
+    }
+  };
+
+  const handleCreate = () => {
+    if (editTask == null) {
+      setAddTask((prev) => !prev);
+      setTitle("");
+      setDescription("");
+    } else {
+      setEditTask(null);
+      setTitle("");
+      setDescription("");
+      setAddTask(true);
+    }
+  };
+
+  const handleDelete = async () => {};
+
   const handleSubmit = async () => {
     const todoData = {
       title,
@@ -35,18 +65,34 @@ const Home = () => {
     };
 
     try {
-      const response = await fetch("http://localhost:8000/task/store", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(todoData),
-      });
+      let response;
+      if (editTask === null) {
+        response = await fetch("http://localhost:8000/task/store", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(todoData),
+        });
+      } else {
+        response = await fetch(
+          `http://localhost:8000/task/${tasks[editTask].id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(todoData),
+          }
+        );
+      }
 
       if (response.ok) {
         setTitle("");
         setDescription("");
         setAddTask(false);
+        setEditTask(null);
+        handleTasks();
       } else {
         console.error("Failed to create task");
       }
@@ -57,7 +103,7 @@ const Home = () => {
 
   useEffect(() => {
     handleTasks();
-  }, [handleSubmit]);
+  }, []);
 
   return (
     <>
@@ -71,7 +117,7 @@ const Home = () => {
             </p>
             <div className="">
               <button
-                onClick={() => setAddTask((prev) => !prev)}
+                onClick={handleCreate}
                 className="bg-blue-500 hover:bg-blue-700 text-white rounded-md px-4 py-2"
               >
                 + Add Task
@@ -86,12 +132,34 @@ const Home = () => {
               addTask ? "md:w-2/3 order-2 md:order-1" : ""
             } bg-neutral-300 p-3 rounded-md`}
           >
-            {tasks.map((task, index) => (
-              <div className="" key={index}>
-                <h2>{task.title}</h2>
-                <p>{task.description}</p>
-              </div>
-            ))}
+            <div className="flex flex-col gap-3">
+              {tasks.map((task, index) => (
+                <div className="bg-neutral-100 rounded-lg p-3" key={index}>
+                  <div className="flex gap-3 justify-between">
+                    <div className="">
+                      <h2 className="text-2xl font-semibold border-b-2">
+                        {task.title}
+                      </h2>
+                      <p>{task.description}</p>
+                    </div>
+                    <div className="">
+                      <img
+                        src={edit}
+                        alt=""
+                        className="w-5 h-5 mb-3 cursor-pointer"
+                        onClick={() => handleEdit(index)}
+                      />
+                      <img
+                        src={trash}
+                        alt=""
+                        className="w-5 h-5"
+                        onClick={handleDelete}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           {addTask && (
@@ -102,7 +170,9 @@ const Home = () => {
             >
               <div className="border-2 rounded-md p-4">
                 <div className="flex flex-col gap-3">
-                  <h1 className="font-bold text-2xl">Add New Task</h1>
+                  <h1 className="font-bold text-2xl">
+                    {editTask == null ? "Add New Task" : "Edit Task"}
+                  </h1>
                   <input
                     type="text"
                     name="title"
@@ -124,7 +194,7 @@ const Home = () => {
                       className="bg-blue-500 hover:bg-blue-700 px-4 py-1.5 text-white rounded-md"
                       onClick={handleSubmit}
                     >
-                      Create Task
+                      {editTask == null ? "Create Task" : "Update Task"}
                     </button>
                   </div>
                 </div>

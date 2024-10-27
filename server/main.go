@@ -11,11 +11,15 @@ import (
 	"gorm.io/gorm"
 )
 
-func enableCors(w * http.ResponseWriter) {
-	(*w).Header().Set("Access-Control-Allow-Origin", "*")
-	(*w).Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-	(*w).Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	(*w).Header().Set("Access-Control-Allow-Credentials", "true")
+func enableCors(w http.ResponseWriter) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+}
+
+func handleOptions(w http.ResponseWriter, r *http.Request) {
+	enableCors(w)
+	w.WriteHeader(http.StatusOK)
 }
 
 type Task struct {
@@ -28,12 +32,12 @@ type Task struct {
 }
 
 func handleIndex(w http.ResponseWriter, r * http.Request) {
-	enableCors(&w) 
+	enableCors(w) 
 	fmt.Fprintf(w, "Server Started...")
 }
 
 func handleTasks(w http.ResponseWriter, r * http.Request, db * gorm.DB) {
-	enableCors(&w) 
+	enableCors(w) 
 	var tasks []Task
 	result := db.Find(&tasks)
 
@@ -47,7 +51,7 @@ func handleTasks(w http.ResponseWriter, r * http.Request, db * gorm.DB) {
 }
 
 func handleCreateTask(w http.ResponseWriter, r * http.Request, db * gorm.DB) {
-	enableCors(&w) 
+	enableCors(w) 
 	w.WriteHeader(http.StatusOK)
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -70,6 +74,34 @@ func handleCreateTask(w http.ResponseWriter, r * http.Request, db * gorm.DB) {
 	json.NewEncoder(w).Encode(map[string]string{"message":"Task created successfully"})
 }
 
+func handleEditTask(w http.ResponseWriter, r* http.Request, db * gorm.DB) {
+	id := r.PathValue("id")
+
+	body, err := io.ReadAll(r.Body)
+
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		return
+	}
+
+	var task Task
+	if err := json.Unmarshal(body, &task); err != nil {
+		http.Error(w, "Invalid input format", http.StatusBadRequest)
+		return
+	}
+
+	if result := db.Where("id = ?", id).Updates(task);result.Error != nil {
+		http.Error(w, "Failed to update category", http.StatusInternalServerError)
+    	return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"id":id, "message": "Task updated successfully"})
+}
+
+func handleDeleteTask(w http.ResponseWriter, r* http.Request, db * gorm.DB) {
+}
+
 func main() {
 	mux := http.NewServeMux()
 	var port = "8000"
@@ -85,6 +117,19 @@ func main() {
 	})
 	mux.HandleFunc("/task/store", func(w http.ResponseWriter, r * http.Request) {
 		handleCreateTask(w, r, db)
+	})
+	mux.HandleFunc("/task/{id}", func(w http.ResponseWriter, r * http.Request) {
+		enableCors(w)
+		if r.Method == http.MethodOptions {
+			handleOptions(w, r)
+			return
+		}
+	
+		if r.Method == http.MethodPut {
+			handleEditTask(w, r, db)
+		} else if r.Method == http.MethodDelete {
+			handleDeleteTask(w, r, db)
+		}
 	})
 
 	fmt.Printf("Server Started at Port %s\n", port)
