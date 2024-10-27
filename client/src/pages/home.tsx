@@ -56,8 +56,6 @@ const Home = () => {
     }
   };
 
-  const handleDelete = async () => {};
-
   const handleSubmit = async () => {
     const todoData = {
       title,
@@ -98,6 +96,27 @@ const Home = () => {
       }
     } catch (e) {
       console.error("Error submitting task:", e);
+    }
+  };
+
+  const handleDelete = async (index: number) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8000/task/${tasks[index].id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        console.error("Failed to delete task");
+      }
+      handleTasks();
+    } catch (e) {
+      console.error("Error deleting task:", e);
     }
   };
 
@@ -152,8 +171,8 @@ const Home = () => {
                       <img
                         src={trash}
                         alt=""
-                        className="w-5 h-5"
-                        onClick={handleDelete}
+                        className="w-5 h-5 cursor-pointer"
+                        onClick={() => handleDelete(index)}
                       />
                     </div>
                   </div>

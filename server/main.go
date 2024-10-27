@@ -66,7 +66,7 @@ func handleCreateTask(w http.ResponseWriter, r * http.Request, db * gorm.DB) {
 	}
 
 	if result := db.Create(&task); result.Error != nil {
-		http.Error(w, "Failed to create category", http.StatusInternalServerError)
+		http.Error(w, "Failed to create task", http.StatusInternalServerError)
         return
 	}
 
@@ -91,7 +91,7 @@ func handleEditTask(w http.ResponseWriter, r* http.Request, db * gorm.DB) {
 	}
 
 	if result := db.Where("id = ?", id).Updates(task);result.Error != nil {
-		http.Error(w, "Failed to update category", http.StatusInternalServerError)
+		http.Error(w, "Failed to update task", http.StatusInternalServerError)
     	return
 	}
 
@@ -100,6 +100,21 @@ func handleEditTask(w http.ResponseWriter, r* http.Request, db * gorm.DB) {
 }
 
 func handleDeleteTask(w http.ResponseWriter, r* http.Request, db * gorm.DB) {
+	id := r.PathValue("id")
+
+	var task Task
+	if err := db.First(&task, id).Error; err != nil {
+		http.Error(w, "Task not found", http.StatusNotFound)
+		return
+	}
+
+	if err := db.Delete(&task).Error;err != nil {
+		http.Error(w, "Failed to delete task", http.StatusInternalServerError)
+    	return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"message": "Task deleted successfully"})
 }
 
 func main() {
