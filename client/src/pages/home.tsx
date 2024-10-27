@@ -100,6 +100,13 @@ const Home = () => {
   };
 
   const handleDelete = async (index: number) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this task?"
+    );
+    if (!confirmed) {
+      return;
+    }
+
     try {
       const response = await fetch(
         `http://localhost:8000/task/${tasks[index].id}`,
